@@ -5,7 +5,7 @@ const router = express.Router();
 
 // backend/routes.js
 router.post("/register", async (req, res) => {
-  const { email, password, code } = req.body;
+  const { email, password, signUpCode } = req.body;
 
   try {
     const userRecord = await auth.createUser({ email, password });
@@ -15,9 +15,13 @@ router.post("/register", async (req, res) => {
     const signUpCodeDoc = await signUpCodeRef.get();
 
     let role = "public";
-    if (signUpCodeDoc.exists && signUpCodeDoc.data().code === code) {
+    if (signUpCodeDoc.exists && signUpCodeDoc.data().code === signUpCode) {
       role = "employee";
     }
+
+    console.log("SignUpCode data:", signUpCodeDoc.data()); // Debugging log
+    console.log("Entered code:", signUpCode); // Debugging log
+    console.log("Assigned role:", role); // Debugging log
 
     // Create a new userProfile document in the Firestore collection
     await db.collection("userProfile").doc(userRecord.uid).set({
