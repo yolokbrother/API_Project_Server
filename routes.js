@@ -15,6 +15,7 @@ router.post("/register", async (req, res) => {
     const signUpCodeDoc = await signUpCodeRef.get();
 
     let role = "public";
+    let userName = "default";
     if (signUpCodeDoc.exists && signUpCodeDoc.data().code === signUpCode) {
       role = "employee";
     }
@@ -25,6 +26,7 @@ router.post("/register", async (req, res) => {
 
     // Create a new userProfile document in the Firestore collection
     await db.collection("userProfile").doc(userRecord.uid).set({
+      userName,
       email,
       role,
     });
