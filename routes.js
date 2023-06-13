@@ -48,4 +48,32 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.get("/userRole/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const role = await fetchUserRole(userId);
+    res.status(200).json({ role });
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+    res.status(500).json({ error: "Error fetching user role" });
+  }
+});
+
+
 module.exports = router;
+
+//functions
+async function fetchUserRole(userId) {
+  try {
+    const userDoc = await db.collection("userProfile").doc(userId).get();
+    if (userDoc.exists) {
+      return userDoc.data().role;
+    } else {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+    throw error;
+  }
+}
