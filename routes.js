@@ -1,7 +1,10 @@
 // backend/routes.js
 const express = require("express");
-const { auth, db } = require("./firebaseAdmin"); // Import db
+const { auth, db, firebaseStorage } = require("./firebaseAdmin"); // Import db and firebaseStorage
 const router = express.Router();
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // backend/routes.js
 router.post("/register", async (req, res) => {
@@ -60,6 +63,80 @@ router.get("/userRole/:userId", async (req, res) => {
   }
 });
 
+router.post("/add-cat", upload.single("catImage"), async (req, res) => {
+  try {
+    const { catBreed, catName, catDescription, location } = req.body;
+    const catImage = req.file;
+
+    // Save the cat data in Firestore
+    const catRef = db.collection("Cats").doc();
+    await catRef.set({
+      catId: catRef.id,
+      catBreed,
+      catName,
+      catDescription,
+      location,
+    });
+
+    // Upload the image to Firebase Storage
+    const bucket = firebaseStorage.bucket(); // Use firebaseStorage instead of storage
+    const imageFileName = `cat-images/${catRef.id}/${catImage.originalname}`;
+    const imageFile = bucket.file(imageFileName);
+    const stream = imageFile.createWriteStream({
+      metadata: {
+        contentType: catImage.mimetype,
+      },
+    });
+
+    stream.on("error", (err) => {
+      console.error(err);
+      return res.status(500).send(err);
+    });
+
+    stream.on("finish", async () => {
+      // Get the public URL of the uploaded image
+      const publicUrl = await imageFile.getSignedUrl({
+        action: "read",
+        expires: "03-01-2500",
+      });
+
+      // Update the cat document with the image URL
+      await catRef.update({ catImage: publicUrl[0] });
+
+      res.status(200).send({ success: true, catId: catRef.id });
+    });
+
+    stream.end(catImage.buffer);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error);
+  }
+});
+
+router.get("/cats", async (req, res) => {
+  try {
+    const catSnapshot = await db.collection("Cats").get();
+    const catData = [];
+    catSnapshot.forEach((doc) => {
+      catData.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat data:", error);
+    res.status(500).json({ error: "Error fetching cat data" });
+  }
+});
+
+router.delete("/cats/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    await db.collection("Cats").doc(catId).delete();
+    res.status(200).json({ message: "Cat entry deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting cat entry:", error);
+    res.status(500).json({ error: "Error deleting cat entry" });
+  }
+});
 
 module.exports = router;
 

@@ -5,10 +5,12 @@ const serviceAccount = require("./apinode-64713-firebase-adminsdk-e49t7-dbbc307c
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
+    storageBucket:"apinode-64713.appspot.com",
   });
 }
 
 const db = admin.firestore();
 const auth = admin.auth();
+const firebaseStorage = admin.storage();
 
-module.exports = { auth, db };
+module.exports = { auth, db,firebaseStorage };
