@@ -63,11 +63,23 @@ router.get("/userRole/:userId", async (req, res) => {
     res.status(500).json({ error: "Error fetching user role" });
   }
 });
+//fetch userData
+router.get("/userData/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const userData = await fetchUserData(userId);
+    res.status(200).json(userData);
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Error fetching user data" });
+  }
+});
 
 //add cats
 router.post("/add-cat", upload.single("catImage"), async (req, res) => {
   try {
-    const { catBreed, catName, catDescription, location } = req.body;
+    const { catBreed, catName, catDescription, location,userUid } = req.body;
     const catImage = req.file;
 
     // Save the cat data in Firestore
@@ -78,6 +90,7 @@ router.post("/add-cat", upload.single("catImage"), async (req, res) => {
       catName,
       catDescription,
       location,
+      userUid
     });
 
     // Upload the image to Firebase Storage
@@ -115,10 +128,17 @@ router.post("/add-cat", upload.single("catImage"), async (req, res) => {
   }
 });
 
-//get all cats
+// Get all cats for a specific user
 router.get("/cats", async (req, res) => {
   try {
-    const catSnapshot = await db.collection("Cats").get();
+    const userUid = req.query.userUid;
+    let catQuery = db.collection("Cats");
+
+    if (userUid) {
+      catQuery = catQuery.where("userUid", "==", userUid);
+    }
+
+    const catSnapshot = await catQuery.get();
     const catData = [];
     catSnapshot.forEach((doc) => {
       catData.push({ id: doc.id, ...doc.data() });
@@ -198,6 +218,21 @@ async function fetchUserRole(userId) {
     }
   } catch (error) {
     console.error("Error fetching user role:", error);
+    throw error;
+  }
+}
+
+// Fetch user data function
+async function fetchUserData(userId) {
+  try {
+    const userDoc = await db.collection("userProfile").doc(userId).get();
+    if (userDoc.exists) {
+      return userDoc.data();
+    } else {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
     throw error;
   }
 }
