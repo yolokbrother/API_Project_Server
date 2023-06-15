@@ -51,6 +51,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//fetch userRole
 router.get("/userRole/:userId", async (req, res) => {
   const userId = req.params.userId;
 
@@ -63,6 +64,7 @@ router.get("/userRole/:userId", async (req, res) => {
   }
 });
 
+//add cats
 router.post("/add-cat", upload.single("catImage"), async (req, res) => {
   try {
     const { catBreed, catName, catDescription, location } = req.body;
@@ -113,6 +115,7 @@ router.post("/add-cat", upload.single("catImage"), async (req, res) => {
   }
 });
 
+//get all cats
 router.get("/cats", async (req, res) => {
   try {
     const catSnapshot = await db.collection("Cats").get();
@@ -127,6 +130,28 @@ router.get("/cats", async (req, res) => {
   }
 });
 
+//fetching a single cat entry
+router.get("/cats/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const catRef = db.collection("Cats").doc(catId);
+    const catDoc = await catRef.get();
+
+    if (!catDoc.exists) {
+      res.status(404).json({ error: "Cat not found" });
+      return;
+    }
+
+    const catData = catDoc.data();
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat:", error);
+    res.status(500).json({ error: `Error fetching cat: ${error.message}` });
+  }
+});
+
+
+//delete cats
 router.delete("/cats/:catId", async (req, res) => {
   try {
     const { catId } = req.params;
@@ -135,6 +160,28 @@ router.delete("/cats/:catId", async (req, res) => {
   } catch (error) {
     console.error("Error deleting cat entry:", error);
     res.status(500).json({ error: "Error deleting cat entry" });
+  }
+});
+
+
+//update cats
+router.put("/cats/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const { catBreed, catName, catDescription, location } = req.body;
+
+    const catRef = db.collection("Cats").doc(catId);
+    await catRef.update({
+      catBreed,
+      catName,
+      catDescription,
+      location,
+    });
+
+    res.status(200).json({ message: `Cat entry updated successfully: ${catId}` });
+  } catch (error) {
+    console.error("Error updating cat entry:", error);
+    res.status(500).json({ error: `Error updating cat entry: ${error.message}` });
   }
 });
 
