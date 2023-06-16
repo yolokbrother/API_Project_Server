@@ -3,7 +3,7 @@ const express = require("express");
 const { auth, db, firebaseStorage } = require("./firebaseAdmin"); // Import db and firebaseStorage
 const router = express.Router();
 const multer = require("multer");
-const storage = multer.memoryStorage();
+const {storage} = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // backend/routes.js
@@ -150,6 +150,22 @@ router.get("/cats", async (req, res) => {
   }
 });
 
+// Get all cats
+router.get("/AllCats", async (req, res) => {
+  try {
+    let catQuery = db.collection("Cats");
+    const catSnapshot = await catQuery.get();
+    const catData = [];
+    catSnapshot.forEach((doc) => {
+      catData.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat data:", error);
+    res.status(500).json({ error: "Error fetching cat data" });
+  }
+});
+
 //fetching a single cat entry
 router.get("/cats/:catId", async (req, res) => {
   try {
@@ -202,6 +218,18 @@ router.put("/cats/:catId", async (req, res) => {
   } catch (error) {
     console.error("Error updating cat entry:", error);
     res.status(500).json({ error: `Error updating cat entry: ${error.message}` });
+  }
+});
+
+//favourite cat
+router.post('/add-favorite', async (req, res) => {
+  try {
+    const cat = req.body;
+    await db.collection('favorites').doc(cat.id).set(cat);
+    res.status(200).send({ message: 'Favorite added successfully' });
+  } catch (error) {
+    console.error('Error adding favorite:', error);
+    res.status(500).send({ message: 'Error adding favorite', error });
   }
 });
 
