@@ -5,6 +5,7 @@ const router = express.Router();
 const multer = require("multer");
 const {storage} = multer.memoryStorage();
 const upload = multer({ storage: storage });
+const authenticate = require('./authMiddleware');
 
 // backend/routes.js
 router.post("/register", async (req, res) => {
@@ -45,7 +46,7 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const userRecord = await auth.getUserByEmail(email);
-    res.status(200).json({ message: `User found: ${userRecord.uid}` });
+    res.status(200).json({ user: userRecord });
   } catch (error) {
     res.status(400).json({ error: `Error finding user: ${error.message}` });
   }
@@ -63,6 +64,7 @@ router.get("/userRole/:userId", async (req, res) => {
     res.status(500).json({ error: "Error fetching user role" });
   }
 });
+
 //fetch userData
 router.get("/userData/:userId", async (req, res) => {
   const userId = req.params.userId;
@@ -75,9 +77,47 @@ router.get("/userData/:userId", async (req, res) => {
     res.status(500).json({ error: "Error fetching user data" });
   }
 });
+// Get all cats for a specific user
+router.get("/cats", async (req, res) => {
+  try {
+    const userUid = req.query.userUid;
+    let catQuery = db.collection("Cats");
+
+    if (userUid) {
+      catQuery = catQuery.where("userUid", "==", userUid);
+    }
+
+    const catSnapshot = await catQuery.get();
+    const catData = [];
+    catSnapshot.forEach((doc) => {
+      catData.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat data:", error);
+    res.status(500).json({ error: "Error fetching cat data" });
+  }
+});
+
+// Get all cats
+router.get("/AllCats", async (req, res) => {
+  try {
+    let catQuery = db.collection("Cats");
+    const catSnapshot = await catQuery.get();
+    const catData = [];
+    catSnapshot.forEach((doc) => {
+      catData.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat data:", error);
+    res.status(500).json({ error: "Error fetching cat data" });
+  }
+});
+
 
 //add cats
-router.post("/add-cat", upload.single("catImage"), async (req, res) => {
+router.post("/add-cat",authenticate, upload.single("catImage"), async (req, res) => {
   try {
     const { catBreed, catName, catDescription, location,userUid } = req.body;
     const catImage = req.file;
@@ -128,43 +168,6 @@ router.post("/add-cat", upload.single("catImage"), async (req, res) => {
   }
 });
 
-// Get all cats for a specific user
-router.get("/cats", async (req, res) => {
-  try {
-    const userUid = req.query.userUid;
-    let catQuery = db.collection("Cats");
-
-    if (userUid) {
-      catQuery = catQuery.where("userUid", "==", userUid);
-    }
-
-    const catSnapshot = await catQuery.get();
-    const catData = [];
-    catSnapshot.forEach((doc) => {
-      catData.push({ id: doc.id, ...doc.data() });
-    });
-    res.status(200).json(catData);
-  } catch (error) {
-    console.error("Error fetching cat data:", error);
-    res.status(500).json({ error: "Error fetching cat data" });
-  }
-});
-
-// Get all cats
-router.get("/AllCats", async (req, res) => {
-  try {
-    let catQuery = db.collection("Cats");
-    const catSnapshot = await catQuery.get();
-    const catData = [];
-    catSnapshot.forEach((doc) => {
-      catData.push({ id: doc.id, ...doc.data() });
-    });
-    res.status(200).json(catData);
-  } catch (error) {
-    console.error("Error fetching cat data:", error);
-    res.status(500).json({ error: "Error fetching cat data" });
-  }
-});
 
 //fetching a single cat entry
 router.get("/cats/:catId", async (req, res) => {
