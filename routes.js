@@ -1,6 +1,6 @@
 // backend/routes.js
 const express = require("express");
-const { auth, db, firebaseStorage } = require("./firebaseAdmin"); // Import db and firebaseStorage
+const { auth, db, firebaseStorage, admin } = require("./firebaseAdmin"); // Import db and firebaseStorage
 const router = express.Router();
 const multer = require("multer");
 const {storage} = multer.memoryStorage();
@@ -117,7 +117,6 @@ router.get("/AllCats", async (req, res) => {
 });
 
 
-
 //fetching a single cat entry
 router.get("/cats/:catId", async (req, res) => {
   try {
@@ -135,6 +134,84 @@ router.get("/cats/:catId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching cat:", error);
     res.status(500).json({ error: `Error fetching cat: ${error.message}` });
+  }
+});
+
+//set chat
+router.post('/chat', async (req, res) => {
+  const { catId, message } = req.body;
+
+  try {
+    const messagesRef = db.collection('messages');
+    await messagesRef.add({
+      catId,
+      text: message.text,
+      timestamp: message.timestamp,
+    });
+
+    let messageId = message.id;
+    res.status(201).json({ message: 'Message added successfully', messageId });
+  } catch (error) {
+    console.error('Error in /chat POST:', error);
+    res.status(400).json({ error: `Error adding message: ${error.message}` });
+  }
+});
+
+//get chat
+router.get('/chat/:catId', async (req, res) => {
+  const { catId } = req.params;
+
+  try {
+    const messagesRef = db.collection('messages');
+    const messagesSnapshot = await messagesRef.where('catId', '==', catId).orderBy('timestamp').get();
+
+    console.log('catId:', catId);
+    console.log('messagesSnapshot size:', messagesSnapshot.size);
+
+    const messages = [];
+
+    messagesSnapshot.forEach((doc) => {
+      const message = {
+        id: doc.id,
+        ...doc.data(),
+      };
+      messages.push(message);
+    });
+
+    res.status(200).json({ messages });
+  } catch (error) {
+    console.error('Error in /chat/:catId:', error);
+    res.status(400).json({ error: `Error fetching messages: ${error.message}` });
+  }
+});
+
+// DELETE chat message route
+router.delete('/chat/:catId/:messageId', async (req, res) => {
+  const { catId, messageId } = req.params;
+
+  console.log('Received DELETE request for catId:', catId, 'and messageId:', messageId);
+
+  try {
+    const chatRef = db.collection('messages').doc(messageId);
+    const chatSnapshot = await chatRef.get();
+
+    if (chatSnapshot.exists) {
+      console.log('Message found:', chatSnapshot.data());
+
+      if (chatSnapshot.data().catId === catId) {
+        await chatRef.delete();
+        res.status(200).json({ message: 'Message deleted successfully' });
+      } else {
+        console.log('Mismatched catId for the message');
+        res.status(404).json({ error: 'Message not found' });
+      }
+    } else {
+      console.log('Message not found');
+      res.status(404).json({ error: 'Message not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ error: 'Error deleting message' });
   }
 });
 
