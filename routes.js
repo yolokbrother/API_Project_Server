@@ -77,6 +77,7 @@ router.get("/userData/:userId", async (req, res) => {
     res.status(500).json({ error: "Error fetching user data" });
   }
 });
+
 // Get all cats for a specific user
 router.get("/cats", async (req, res) => {
   try {
@@ -114,6 +115,8 @@ router.get("/AllCats", async (req, res) => {
     res.status(500).json({ error: "Error fetching cat data" });
   }
 });
+
+
 
 //fetching a single cat entry
 router.get("/cats/:catId", async (req, res) => {
@@ -221,7 +224,7 @@ router.put("/cats/:catId",authenticate, async (req, res) => {
   }
 });
 
-//favourite cat
+//add favourite cat
 router.post('/add-favorite',authenticate, async (req, res) => {
   try {
     const cat = req.body;
@@ -230,6 +233,26 @@ router.post('/add-favorite',authenticate, async (req, res) => {
   } catch (error) {
     console.error('Error adding favorite:', error);
     res.status(500).send({ message: 'Error adding favorite', error });
+  }
+});
+
+// Get Favourite cats
+router.get("/FavouriteCats",authenticate, async (req, res) => {
+  try {
+    const userUid = req.query.userUid;
+    let catQuery = db.collection("favorites");
+    if (userUid) {
+      catQuery = catQuery.where("favouriteUid", "==", userUid);
+    }
+    const catSnapshot = await catQuery.get();
+    const catData = [];
+    catSnapshot.forEach((doc) => {
+      catData.push({ id: doc.id, ...doc.data() });
+    });
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat data:", error);
+    res.status(500).json({ error: "Error fetching cat data" });
   }
 });
 
