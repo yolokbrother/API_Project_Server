@@ -115,7 +115,27 @@ router.get("/AllCats", async (req, res) => {
   }
 });
 
+//fetching a single cat entry
+router.get("/cats/:catId", async (req, res) => {
+  try {
+    const { catId } = req.params;
+    const catRef = db.collection("Cats").doc(catId);
+    const catDoc = await catRef.get();
 
+    if (!catDoc.exists) {
+      res.status(404).json({ error: "Cat not found" });
+      return;
+    }
+
+    const catData = catDoc.data();
+    res.status(200).json(catData);
+  } catch (error) {
+    console.error("Error fetching cat:", error);
+    res.status(500).json({ error: `Error fetching cat: ${error.message}` });
+  }
+});
+
+//authenticate
 //add cats
 router.post("/add-cat",authenticate, upload.single("catImage"), async (req, res) => {
   try {
@@ -168,30 +188,8 @@ router.post("/add-cat",authenticate, upload.single("catImage"), async (req, res)
   }
 });
 
-
-//fetching a single cat entry
-router.get("/cats/:catId", async (req, res) => {
-  try {
-    const { catId } = req.params;
-    const catRef = db.collection("Cats").doc(catId);
-    const catDoc = await catRef.get();
-
-    if (!catDoc.exists) {
-      res.status(404).json({ error: "Cat not found" });
-      return;
-    }
-
-    const catData = catDoc.data();
-    res.status(200).json(catData);
-  } catch (error) {
-    console.error("Error fetching cat:", error);
-    res.status(500).json({ error: `Error fetching cat: ${error.message}` });
-  }
-});
-
-
 //delete cats
-router.delete("/cats/:catId", async (req, res) => {
+router.delete("/cats/:catId",authenticate, async (req, res) => {
   try {
     const { catId } = req.params;
     await db.collection("Cats").doc(catId).delete();
@@ -202,9 +200,8 @@ router.delete("/cats/:catId", async (req, res) => {
   }
 });
 
-
 //update cats
-router.put("/cats/:catId", async (req, res) => {
+router.put("/cats/:catId",authenticate, async (req, res) => {
   try {
     const { catId } = req.params;
     const { catBreed, catName, catDescription, location } = req.body;
@@ -225,7 +222,7 @@ router.put("/cats/:catId", async (req, res) => {
 });
 
 //favourite cat
-router.post('/add-favorite', async (req, res) => {
+router.post('/add-favorite',authenticate, async (req, res) => {
   try {
     const cat = req.body;
     await db.collection('favorites').doc(cat.id).set(cat);
