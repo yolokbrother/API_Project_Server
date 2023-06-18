@@ -137,14 +137,16 @@ router.get("/cats/:catId", async (req, res) => {
   }
 });
 
-//set chat
+//post chat
 router.post('/chat', async (req, res) => {
-  const { catId, message } = req.body;
+  const { catId, message} = req.body;
 
   try {
     const messagesRef = db.collection('messages');
+    console.log(message)
     await messagesRef.add({
       catId,
+      userId: message.userId,
       text: message.text,
       timestamp: message.timestamp,
     });
