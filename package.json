@@ -10,12 +10,15 @@
     "firebase": "9",
     "firebase-admin": "9",
     "multer": "^1.4.5-lts.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^4.6.3",
     "twit": "^2.2.11",
     "twitter-api-v2": "^1.15.0"
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start:swagger": "node swagger.js"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

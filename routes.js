@@ -3,13 +3,92 @@ const express = require("express");
 const { auth, db, firebaseStorage, admin } = require("./firebaseAdmin"); // Import db and firebaseStorage
 const router = express.Router();
 const multer = require("multer");
-const {storage} = multer.memoryStorage();
+const { storage } = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authenticate = require('./authMiddleware');
 //twitter
 const { postTweet } = require('./twitter');
 
-// backend/routes.js
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *         password:
+ *           type: string
+ *           format: password
+ *         signUpCode:
+ *           type: string
+ *           description: Optional sign up code for employee registration
+ *       example:
+ *         email: user@example.com
+ *         password: password123
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Cat:
+ *       type: object
+ *       required:
+ *         - id
+ *         - catBreed
+ *         - catName
+ *         - catDescription
+ *         - location
+ *         - userUid
+ *         - catImage
+ *       properties:
+ *         id:
+ *           type: string
+ *         catBreed:
+ *           type: string
+ *         catName:
+ *           type: string
+ *         catDescription:
+ *           type: string
+ *         location:
+ *           type: string
+ *         userUid:
+ *           type: string
+ *         catImage:
+ *           type: string
+ *       example:
+ *         id: abc123
+ *         catBreed: Maine Coon
+ *         catName: Fluffy
+ *         catDescription: A very fluffy cat.
+ *         location: New York, NY
+ *         userUid: user123
+ *         catImage: https://example.com/cat-image.jpg
+ */
+
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       400:
+ *         description: Error creating user
+ */
 router.post("/register", async (req, res) => {
   const { email, password, signUpCode } = req.body;
 
@@ -44,6 +123,23 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login the user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: User found
+ *       400:
+ *         description: Error finding user
+ */
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -54,7 +150,23 @@ router.post("/login", async (req, res) => {
   }
 });
 
-//fetch userRole
+/**
+ * @swagger
+ * /userRole/{userId}:
+ *   get:
+ *     summary: Fetch user role
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User role fetched successfully
+ *       500:
+ *         description: Error fetching user role
+ */
 router.get("/userRole/:userId", async (req, res) => {
   const userId = req.params.userId;
 
@@ -67,7 +179,36 @@ router.get("/userRole/:userId", async (req, res) => {
   }
 });
 
-//fetch userData
+
+/**
+ * @swagger
+ * /userData/{userId}:
+ *   get:
+ *     summary: Fetch user data
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User data fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *       500:
+ *         description: Error fetching user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 router.get("/userData/:userId", async (req, res) => {
   const userId = req.params.userId;
 
@@ -80,7 +221,39 @@ router.get("/userData/:userId", async (req, res) => {
   }
 });
 
-// Get all cats for a specific user
+/**
+ * @swagger
+ * /cats:
+ *   get:
+ *     summary: Get all cats for a specific user
+ *     parameters:
+ *       - in: query
+ *         name: userUid
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cat data fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *       500:
+ *         description: Error fetching cat data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 router.get("/cats", async (req, res) => {
   try {
     const userUid = req.query.userUid;
@@ -102,7 +275,33 @@ router.get("/cats", async (req, res) => {
   }
 });
 
-// Get all cats
+/**
+ * @swagger
+ * /AllCats:
+ *   get:
+ *     summary: Get all cats
+ *     responses:
+ *       200:
+ *         description: Cat data fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *       500:
+ *         description: Error fetching cat data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 router.get("/AllCats", async (req, res) => {
   try {
     let catQuery = db.collection("Cats");
@@ -119,7 +318,25 @@ router.get("/AllCats", async (req, res) => {
 });
 
 
-//fetching a single cat entry
+/**
+ * @swagger
+ * /cats/{catId}:
+ *   get:
+ *     summary: Fetch a single cat entry
+ *     parameters:
+ *       - in: path
+ *         name: catId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cat entry fetched successfully
+ *       404:
+ *         description: Cat not found
+ *       500:
+ *         description: Error fetching cat
+ */
 router.get("/cats/:catId", async (req, res) => {
   try {
     const { catId } = req.params;
@@ -139,9 +356,46 @@ router.get("/cats/:catId", async (req, res) => {
   }
 });
 
-//post chat
+/**
+ * @swagger
+ * /chat:
+ *   post:
+ *     summary: Post a chat message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - catId
+ *               - message
+ *             properties:
+ *               catId:
+ *                 type: string
+ *               message:
+ *                 type: object
+ *                 properties:
+ *                   userId:
+ *                     type: string
+ *                   text:
+ *                     type: string
+ *                   timestamp:
+ *                     type: string
+ *             example:
+ *               catId: abc123
+ *               message:
+ *                 userId: user123
+ *                 text: Hello, world!
+ *                 timestamp: "2023-06-18T00:00:00.000Z"
+ *     responses:
+ *       201:
+ *         description: Message added successfully
+ *       400:
+ *         description: Error adding message
+ */
 router.post('/chat', async (req, res) => {
-  const { catId, message} = req.body;
+  const { catId, message } = req.body;
 
   try {
     const messagesRef = db.collection('messages');
@@ -161,7 +415,23 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-//get chat
+/**
+ * @swagger
+ * /chat/{catId}:
+ *   get:
+ *     summary: Fetch chat messages for a specific cat
+ *     parameters:
+ *       - in: path
+ *         name: catId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Chat messages fetched successfully
+ *       400:
+ *         description: Error fetching messages
+ */
 router.get('/chat/:catId', async (req, res) => {
   const { catId } = req.params;
 
@@ -189,7 +459,30 @@ router.get('/chat/:catId', async (req, res) => {
   }
 });
 
-// DELETE chat message route
+/**
+ * @swagger
+ * /chat/{catId}/{messageId}:
+ *   delete:
+ *     summary: Delete a chat message
+ *     parameters:
+ *       - in: path
+ *         name: catId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: messageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Message deleted successfully
+ *       404:
+ *         description: Message not found
+ *       500:
+ *         description: Error deleting message
+ */
 router.delete('/chat/:catId/:messageId', async (req, res) => {
   const { catId, messageId } = req.params;
 
@@ -219,11 +512,47 @@ router.delete('/chat/:catId/:messageId', async (req, res) => {
   }
 });
 
-//authenticate
-//add cats
-router.post("/add-cat",authenticate, upload.single("catImage"), async (req, res) => {
+/**
+ * @swagger
+ * /add-cat:
+ *   post:
+ *     summary: Add a new cat entry
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - catBreed
+ *               - catName
+ *               - catDescription
+ *               - location
+ *               - userUid
+ *               - catImage
+ *             properties:
+ *               catBreed:
+ *                 type: string
+ *               catName:
+ *                 type: string
+ *               catDescription:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               userUid:
+ *                 type: string
+ *               catImage:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Cat entry added successfully
+ *       500:
+ *         description: Error adding cat entry
+ */
+router.post("/add-cat", authenticate, upload.single("catImage"), async (req, res) => {
   try {
-    const { catBreed, catName, catDescription, location,userUid } = req.body;
+    const { catBreed, catName, catDescription, location, userUid } = req.body;
     const catImage = req.file;
 
     // Save the cat data in Firestore
@@ -272,8 +601,24 @@ router.post("/add-cat",authenticate, upload.single("catImage"), async (req, res)
   }
 });
 
-//delete cats
-router.delete("/cats/:catId",authenticate, async (req, res) => {
+/**
+ * @swagger
+ * /cats/{catId}:
+ *   delete:
+ *     summary: Delete a cat entry
+ *     parameters:
+ *       - in: path
+ *         name: catId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cat entry deleted successfully
+ *       500:
+ *         description: Error deleting cat entry
+ */
+router.delete("/cats/:catId", authenticate, async (req, res) => {
   try {
     const { catId } = req.params;
     await db.collection("Cats").doc(catId).delete();
@@ -284,8 +629,39 @@ router.delete("/cats/:catId",authenticate, async (req, res) => {
   }
 });
 
-//update cats
-router.put("/cats/:catId",authenticate, async (req, res) => {
+/**
+ * @swagger
+ * /cats/{catId}:
+ *   put:
+ *     summary: Update a cat entry
+ *     parameters:
+ *       - in: path
+ *         name: catId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               catBreed:
+ *                 type: string
+ *               catName:
+ *                 type: string
+ *               catDescription:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cat entry updated successfully
+ *       500:
+ *         description: Error updating cat entry
+ */
+router.put("/cats/:catId", authenticate, async (req, res) => {
   try {
     const { catId } = req.params;
     const { catBreed, catName, catDescription, location } = req.body;
@@ -305,8 +681,24 @@ router.put("/cats/:catId",authenticate, async (req, res) => {
   }
 });
 
-//add favourite cat
-router.post('/add-favorite',authenticate, async (req, res) => {
+/**
+ * @swagger
+ * /add-favorite:
+ *   post:
+ *     summary: Add a favorite cat
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Cat'
+ *     responses:
+ *       200:
+ *         description: Favorite added successfully
+ *       500:
+ *         description: Error adding favorite
+ */
+router.post('/add-favorite', authenticate, async (req, res) => {
   try {
     const cat = req.body;
     await db.collection('favorites').doc(cat.id).set(cat);
@@ -317,8 +709,23 @@ router.post('/add-favorite',authenticate, async (req, res) => {
   }
 });
 
-// Get Favourite cats
-router.get("/FavouriteCats",authenticate, async (req, res) => {
+/**
+ * @swagger
+ * /FavouriteCats:
+ *   get:
+ *     summary: Fetch favorite cats
+ *     parameters:
+ *       - in: query
+ *         name: userUid
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cat data fetched successfully
+ *       500:
+ *         description: Error fetching cat data
+ */
+router.get("/FavouriteCats", authenticate, async (req, res) => {
   try {
     const userUid = req.query.userUid;
     let catQuery = db.collection("favorites");
@@ -337,8 +744,29 @@ router.get("/FavouriteCats",authenticate, async (req, res) => {
   }
 });
 
-//post twitter
-router.post('/post-tweet',authenticate, async (req, res) => {
+/**
+ * @swagger
+ * /post-tweet:
+ *   post:
+ *     summary: Post a tweet
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tweet:
+ *                 type: string
+ *             example:
+ *               tweet: Check out this adorable cat!
+ *     responses:
+ *       201:
+ *         description: Tweet posted successfully
+ *       400:
+ *         description: Error posting tweet
+ */
+router.post('/post-tweet', authenticate, async (req, res) => {
   const { tweet } = req.body;
 
   try {
