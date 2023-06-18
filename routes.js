@@ -91,6 +91,7 @@ const { postTweet } = require('./twitter');
  */
 router.post("/register", async (req, res) => {
   const { email, password, signUpCode } = req.body;
+  console.log("Request body:", req.body);
 
   try {
     const userRecord = await auth.createUser({ email, password });
@@ -119,6 +120,7 @@ router.post("/register", async (req, res) => {
     res.status(201).json({ message: `User created successfully: ${userRecord.uid}` });
   } catch (error) {
     console.error("Error in /register:", error);
+    console.error("Request body:", req.body); // Debugging log
     res.status(400).json({ error: `Error creating user: ${error.message}` });
   }
 });

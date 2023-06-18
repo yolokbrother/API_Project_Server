@@ -18,9 +18,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "start:swagger": "node swagger.js"
+    "start:swagger": "node swagger.js",
+    "test": "jest"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "jest": "^29.5.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^6.3.3"
   }
 }
