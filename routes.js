@@ -338,7 +338,7 @@ router.get("/FavouriteCats",authenticate, async (req, res) => {
 });
 
 //post twitter
-router.post('/post-tweet', async (req, res) => {
+router.post('/post-tweet',authenticate, async (req, res) => {
   const { tweet } = req.body;
 
   try {
