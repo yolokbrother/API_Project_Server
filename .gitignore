@@ -1,3 +1,4 @@
 node_modules
 # .gitignore
+.env
 apinode-64713-firebase-adminsdk-e49t7-dbbc307cc1.json

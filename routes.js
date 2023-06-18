@@ -6,6 +6,8 @@ const multer = require("multer");
 const {storage} = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authenticate = require('./authMiddleware');
+//twitter
+const { postTweet } = require('./twitter');
 
 // backend/routes.js
 router.post("/register", async (req, res) => {
@@ -332,6 +334,19 @@ router.get("/FavouriteCats",authenticate, async (req, res) => {
   } catch (error) {
     console.error("Error fetching cat data:", error);
     res.status(500).json({ error: "Error fetching cat data" });
+  }
+});
+
+//post twitter
+router.post('/post-tweet', async (req, res) => {
+  const { tweet } = req.body;
+
+  try {
+    const tweetId = await postTweet(tweet);
+    res.status(201).json({ message: 'Tweet posted successfully', tweetId });
+  } catch (error) {
+    console.error('Error in /post-tweet POST:', error);
+    res.status(400).json({ error: `Error posting tweet: ${error.message}` });
   }
 });
 
